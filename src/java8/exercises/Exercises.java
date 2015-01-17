@@ -6,14 +6,18 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
+import static java.lang.Integer.*;
+import static java.util.stream.Collectors.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
@@ -22,20 +26,20 @@ public class Exercises {
 // Exercise 1: Print out all the words in wordList, which is
 // a static List<String> defined at the bottom of this file.
 
-    @Test @Ignore
+    @Test
     public void printAllWords() {
-        /* TODO */
-
-        // no assertions
+        wordList.stream().forEach(System.out::println);
     }
-    
+
 // Exercise 2: Convert all words in wordList to upper case,
 // and gather the result into an output list.
-    
-    @Test @Ignore
+
+    @Test
     public void upperCaseWords() {
-        List<String> output = null; /* TODO */
-        
+        List<String> output = wordList.stream()
+                .map(String::toUpperCase)
+                .collect(toList());
+
         assertEquals(
             Arrays.asList(
                 "EVERY", "PROBLEM", "IN", "COMPUTER", "SCIENCE",
@@ -46,36 +50,41 @@ public class Exercises {
 
 // Exercise 3: Find all the words in wordList that have even length
 // and put them into an output list.
-    
-    @Test @Ignore
+
+    @Test
     public void findEvenLengthWords() {
-        List<String> output = null; /* TODO */
-        
+        List<String> output = wordList.stream()
+                .filter(word -> word.length() % 2 == 0)
+                .collect(toList());
+
         assertEquals(
             Arrays.asList(
                 "in", "computer", "be", "solved", "by", "adding", "of"),
                 output);
     }
-    
+
 // Exercise 4: Count the number of lines in a file. The field *reader*
 // is a BufferedReader which will be opened for you on the text file.
 // See the JUnit @Before and @After methods at the bottom of this file.
 // The text file is "SonnetI.txt" (Shakespeare's first sonnet) which is
 // located at the root of this NetBeans project.
 
-    @Test @Ignore
+    @Test
     public void countLinesInFile() throws IOException {
-        long count = 0L; /* TODO */
-        
+        long count = reader.lines().count();
+
         assertEquals(14, count);
     }
-    
+
 // Exercise 5: Join lines 3-4 from the text file into a single string.
-    
-    @Test @Ignore
+
+    @Test
     public void joinLineRange() throws IOException {
-        String output = null; /* TODO */
-        
+        String output = reader.lines()
+                .skip(2)
+                .limit(2)
+                .collect(joining());
+
         assertEquals(
             "But as the riper should by time decease," +
             "His tender heir might bear his memory:",
@@ -83,23 +92,30 @@ public class Exercises {
     }
 
 // Exercise 6: Find the length of the longest line in the file.
-    
-    @Test @Ignore
+
+    @Test
     public void lengthOfLongestLine() throws IOException {
-        int longest = 0; /* TODO */
-        
+        int longest = reader
+                .lines()
+                .max((s1,s2)-> compare(s1.length(), s2.length()))
+                .get()
+                .length();
+
         assertEquals(longest, 53);
     }
-    
+
 // Exercise 7: Collect all the words from the text file into a list.
 // Hint: use String.split(REGEXP) to split a string into words.
 // Splitting this way results in "words" that are the empty string,
 // which should be discarded. REGEXP is defined at the bottom of this file.
-    
-    @Test @Ignore
+
+    @Test
     public void listOfAllWords() throws IOException {
-        List<String> output = null; /* TODO */
-        
+        List<String> output = reader.lines()
+                .flatMap(word -> Stream.of(word.split(REGEXP)))
+                .filter(word -> word.length() > 0)
+                .collect(toList());
+
         assertEquals(
             Arrays.asList(
                 "From", "fairest", "creatures", "we", "desire", "increase",
@@ -119,13 +135,18 @@ public class Exercises {
                 "due", "by", "the", "grave", "and", "thee"),
             output);
     }
-    
+
 // Exercise 8: Create a list containing the words, lowercased, in alphabetical order.
-    
-    @Test @Ignore
+
+    @Test
     public void sortedLowerCase() throws IOException {
-        List<String> output = null; /* TODO */
-        
+        List<String> output = reader.lines()
+                .flatMap(word -> Stream.of(word.split(REGEXP)))
+                .filter(word->word.length()>0)
+                .map(String::toLowerCase)
+                .sorted()
+                .collect(toList());
+
         assertEquals(
             Arrays.asList(
 		"a", "abundance", "and", "and", "and", "art", "as", "be",
@@ -146,14 +167,21 @@ public class Exercises {
 		"with", "within", "world", "world", "world"),
             output);
     }
-    
+
 // Exercise 9: Sort unique, lower-cased words by length, then alphabetically
 // within length, and place the result into an output list.
 
-    @Test @Ignore
+    @Test
     public void sortedLowerCaseDistinctByLengthThenAlphabetically() throws IOException {
-        List<String> output = null; /* TODO */
-        
+        List<String> output = reader.lines()
+                .flatMap(word -> Stream.of(word.split(REGEXP)))
+                .filter(word -> word.length() > 0)
+                .map(String::toLowerCase)
+                .distinct()
+                .sorted(Comparator.comparingInt(String::length)
+                        .thenComparing(Comparator.<String>naturalOrder()))
+                .collect(toList());
+
         assertEquals(
             Arrays.asList(
                 "a", "s", "as", "be", "by", "in", "or", "st", "to", "we",
@@ -171,16 +199,19 @@ public class Exercises {
                 "substantial"),
             output);
     }
-    
+
 // Exercise 10: Categorize the words into a map, where the map's key is
 // the length of each word, and the value corresponding to a key is a
 // list of words of that length. Don't bother with uniqueness or lower-
 // casing the words.
-    
-    @Test @Ignore
+
+    @Test
     public void mapLengthToWordList() throws IOException {
-        Map<Integer, List<String>> map = null; /* TODO */
-        
+        Map<Integer, List<String>> map = reader.lines()
+                .flatMap(word -> Stream.of(word.split(REGEXP)))
+                .filter(word -> word.length() > 0)
+                .collect(groupingBy(String::length));
+
         assertEquals(6, map.get(7).size());
         assertEquals(Arrays.asList("increase", "ornament"), map.get(8));
         assertEquals(Arrays.asList("creatures", "abundance"), map.get(9));
@@ -193,10 +224,13 @@ public class Exercises {
 // number of occurrences of each word. Don't worry about upper case and
 // lower case. Extra challenge: implement two solutions, one that uses
 // groupingBy() and the other that uses toMap().
-    
-    @Test @Ignore
+
+    @Test
     public void wordFrequencies() throws IOException {
-        Map<String, Long> map = null; /* TODO */
+        Map<String, Long> map = reader.lines()
+                .flatMap(word -> Stream.of(word.split(REGEXP)))
+                .filter(word -> word.length() > 0)
+                .collect(groupingBy(Function.<String>identity(), counting()));
 
         assertEquals(2L, (long)map.get("tender"));
         assertEquals(6L, (long)map.get("the"));
@@ -216,9 +250,13 @@ public class Exercises {
 // representation of the result would be:
 //     {f={3=[foo]}, b={3=[bar, baz], 4=[bazz]}}.
 
-    @Test @Ignore
+    @Test
     public void nestedMaps() throws IOException {
-        Map<String, Map<Integer, List<String>>> map = null; /* TODO */
+        Map<String, Map<Integer, List<String>>> map = reader.lines()
+                .flatMap(word -> Stream.of(word.split(REGEXP)))
+                .filter(word -> word.length() > 0)
+                .collect(groupingBy(word->word.substring(0,1),
+                        groupingBy(String::length)));
 
         assertEquals("[From, Feed]", map.get("F").get(4).toString());
         assertEquals("[by, be, by]", map.get("b").get(2).toString());
@@ -226,7 +264,7 @@ public class Exercises {
             map.get("t").get(3).toString());
         assertEquals("[beauty, bright]", map.get("b").get(6).toString());
     }
-    
+
 // ===== TEST INFRASTRUCTURE ==================================================
 
     static List<String> wordList = Arrays.asList(
